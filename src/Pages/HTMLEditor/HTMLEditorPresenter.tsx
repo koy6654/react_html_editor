@@ -12,38 +12,49 @@ import {
 } from './HTMLEditor.style'
 import PageTitle from '../../Components/PageTItle'
 import AceEditor from 'react-ace';
+import "ace-builds/src-noconflict/ace";
+import "ace-builds/webpack-resolver" ;
+import "ace-builds/src-noconflict/mode-html";
+import "ace-builds/src-noconflict/theme-github";
+import cheerio from 'cheerio';
 import htmlParser from 'html-react-parser';
 
 interface IProps {
     form: FormInstance;
     fileList: UploadFile[];
+    htmlString: string;
     setFileList: (value: UploadFile[]) => void
+    setHtmlString: (value: string) => void
 } 
 
 const HTMLEditorPresenter: React.FC<IProps> = ({
     form,
     fileList,
+    htmlString,
     setFileList,
+    setHtmlString,
 }) => {
-    const fileUpload = (file: any) => {
-        setFileList(file.fileList);
+    const fileUpload = async (file: any) => {
+        setHtmlString(await file.text());
+
+        return false;
     }
 
     const createHtml = () => {
-        return {__html: `
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta http-equiv="X-UA-Compatible" content="IE=edge">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Document</title>
-        </head>
-        <body>
-            This is test HTML
-        </body>
-    </html>
-        `}
+        return {__html: htmlString}
     }
+
+    const contentEditableChange = (e: any)=> {
+        const newHtml= e.target.outerText;
+
+        const $ = cheerio.load(htmlString);
+        $('body').text(newHtml);
+
+        const result = $.html().replace('<body>', '<body>\n').replace('</body></html>', '\n</body>\n</html>');;
+
+        return setHtmlString(result);
+    };
+
 
     return (
         <>
@@ -51,11 +62,12 @@ const HTMLEditorPresenter: React.FC<IProps> = ({
             <HTMLEditorWrapper form={form}>
                 <AceEditorWrapper>
                     <SubTitle>HTML 업로드</SubTitle>
-                    <HTMLEditorItemWrapper label="HTML 파일 업로드">
+                    <HTMLEditorItemWrapper label='HTML 파일 업로드'>
                         <Upload
-                            fileList={fileList}
+                            accept='.html'
+                            showUploadList={false}
                             multiple={false}
-                            onChange={fileUpload}
+                            beforeUpload={fileUpload}
                         >
                             <Button>{<UploadOutlined />}파일 업로드</Button>
                         </Upload>
@@ -66,6 +78,8 @@ const HTMLEditorPresenter: React.FC<IProps> = ({
                             theme='github'
                             width='90%'
                             height='50vh'
+                            value={htmlString}
+                            onChange={setHtmlString}
                         />
                     </HTMLEditorItemWrapper>
                 </AceEditorWrapper>
@@ -73,7 +87,9 @@ const HTMLEditorPresenter: React.FC<IProps> = ({
                     <SubTitle>HTML 미리보기</SubTitle>
                     <HTMLEditorPreviewerWrapper
                         contentEditable={true}
-                        dangerouslySetInnerHTML={createHtml()}>
+                        dangerouslySetInnerHTML={createHtml()}
+                        onInput={contentEditableChange}
+                    >
                     </HTMLEditorPreviewerWrapper>
                 </HTMLPreviewerWrapper>
                 

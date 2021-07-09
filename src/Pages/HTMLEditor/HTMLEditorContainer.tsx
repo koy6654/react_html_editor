@@ -6,18 +6,20 @@ import { BASE_URL } from '../../Components/BASE_URL';
 
 const HTMLEditorContainer: React.FC = () => {
     const [fileList, setFileList] = useState<UploadFile[]>([]);
-    
+    const [htmlString, setHtmlString] = useState<string>('');
+
     const [form] = Form.useForm();
 
     useEffect(() => {
     }, []);
     return (
         <>
-            {/* <button onClick={() => {console.log(BASE_URL)}}>Test</button> */}
             <HTMLEditorPresenter
                 form={form}
                 fileList={fileList}
+                htmlString={htmlString}
                 setFileList={setFileList}
+                setHtmlString={setHtmlString}
             />
         </>
     )
